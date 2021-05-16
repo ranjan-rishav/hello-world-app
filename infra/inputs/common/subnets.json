@@ -1,0 +1,54 @@
+{
+	"aws": { "region": "us-west-2"},
+	"stack": {
+		"name": "dev-subnets",
+		"template_path": "../templates/common/subnets.yaml",
+		"parameters": [
+			{
+				"ParameterKey": "Environment",
+				"ParameterValue": "dev",
+				"UsePreviousValue": false
+			},
+			{
+				"ParameterKey": "VPCID",
+				"ParameterValue": "vpc-47c8e23f",
+				"UsePreviousValue": false
+			},
+			{
+				"ParameterKey": "NATGWRouteTableId",
+				"ParameterValue": "rtb-c9cbdcb2",
+				"UsePreviousValue": false
+			},
+			{
+				"ParameterKey": "SubnetACidrBlock",
+				"ParameterValue": "172.31.64.0/24",
+				"UsePreviousValue": false
+            },
+            {
+				"ParameterKey": "SubnetAAZ",
+				"ParameterValue": "us-west-2a",
+				"UsePreviousValue": false
+            },
+            {
+				"ParameterKey": "NameSuffixSubnetA",
+				"ParameterValue": "pvt-subnet-a",
+				"UsePreviousValue": false
+            },
+            {
+				"ParameterKey": "SubnetBCidrBlock",
+				"ParameterValue": "172.31.65.0/24",
+				"UsePreviousValue": false
+            },
+            {
+				"ParameterKey": "SubnetBAZ",
+				"ParameterValue": "us-west-2b",
+				"UsePreviousValue": false
+            },
+            {
+				"ParameterKey": "NameSuffixSubnetB",
+				"ParameterValue": "pvt-subnet-b",
+				"UsePreviousValue": false
+			}
+		]
+	}
+}

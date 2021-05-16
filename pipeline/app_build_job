@@ -1,0 +1,61 @@
+pipeline {
+	agent none
+	parameters { string(name: 'ami_name', defaultValue: 'service_ami_0.1.0', description: 'Version with which AMI has to be created') }
+	stages {
+		stage('BuildDockerImage'){
+			agent {
+				label 'master'
+			}
+			steps {
+				script{
+					def workspace = pwd()
+					sh """
+						mkdir -p ${workspace}
+						sudo rm -rf ${workspace}/*
+					"""
+					def git_url = "https://github.azc.ext.hp.com/rishav-ranjan/hello-world-app"
+					checkout changelog: false, poll: false, scm: [$class: 'GitSCM', branches: [[name: '*/master']], extensions: [], userRemoteConfigs: [[credentialsId: 'git_api_token', url: "${git_url}"]]]
+					sh """
+						cd app/
+						sudo pip3 install -e .
+						sudo pip3 install -e .[test]
+						sudo pip3 install sdist
+						sudo pip3 install boto3
+						export FLASK_APP="helloworld:create_app()"
+						nohup flask run </dev/null >/dev/null 2>&1 &
+						python3 -m py.test
+						sudo python3 setup.py sdist
+						sudo docker build -t helloworld:0.1.0 .
+						sudo docker tag helloworld:0.1.0 rishavranjan08/helloworld-app:0.1.0
+						sudo docker push rishavranjan08/helloworld-app:0.1.0
+					"""
+					
+				}
+			}
+		}
+		stage('BuildAMI'){
+			agent {
+				label 'master'
+			}
+			steps {
+				script{
+					def workspace = pwd()
+					sh """
+						cd infra/scripts/
+						# Create temp EC2 instance
+						sudo python3 app_build.py -o create_ec2 |sudo tee ec2_output.log
+						instance_id=\$(cat ec2_output.log|grep InstanceID=|awk -F= '{print \$2}')
+						instance_pvt_ip=\$(cat ec2_output.log|grep PrivateIP=|awk -F= '{print \$2}')
+						# Copy startup script to instance
+						chmod +x ${workspace}/infra/scripts/service_startup.sh
+						sudo scp -q -o StrictHostKeyChecking=no -i /home/ec2-user/interim_instance.pem ${workspace}/infra/scripts/service_startup.sh ec2-user@\$instance_pvt_ip:/home/ec2-user/service_startup.sh
+						# Create AMI and terminate instance
+						sudo python3 app_build.py -o create_ami -i \$instance_id -a ${params.ami_name} | sudo tee ami_output.log
+						
+					"""
+					
+				}
+			}
+		}
+	}
+}

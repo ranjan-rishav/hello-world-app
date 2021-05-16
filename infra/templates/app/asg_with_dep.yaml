@@ -1,0 +1,188 @@
+Parameters:
+  AppName:
+    Description: Application Name for tagging instance
+    Type: String
+  KeyName:
+    Description: Name of an existing EC2 Key Pair to enable SSH access to the instance
+    Type: 'AWS::EC2::KeyPair::KeyName'
+  InstanceType:
+    Description: EC2 instance type
+    Type: String
+    Default: t2.micro
+    AllowedValues:
+      - t2.nano
+      - t2.micro
+      - t2.small
+      - t3.medium
+      - t2.large
+      - m4.large
+      - m4.xlarge
+      - m4.2xlarge
+      - m4.4xlarge
+      - m4.10xlarge
+      - m3.medium
+      - m3.large
+      - m3.xlarge
+      - m3.2xlarge
+      - c4.large
+      - c4.xlarge
+      - c4.2xlarge
+      - c4.4xlarge
+    ConstraintDescription: Must be a valid EC2 instance type.
+  AMIID:
+    Description: AMI ID for app instance
+    Type: 'AWS::EC2::Image::Id'
+  VolumeSize:
+    Default: '16'
+    Description: EBS Volume Size in GB
+    Type: Number
+    MinValue: '10'
+    MaxValue: '512'
+  MinInstances:
+    Default: '1'
+    Description: Minimum number of instances required
+    Type: Number
+    MinValue: '0'
+    MaxValue: '5'
+  MaxInstances:
+    Default: '4'
+    Description: Maximum number of instances required
+    Type: Number
+    MinValue: '0'
+    MaxValue: '10'
+  BatchSize:
+    Default: '1'
+    Description: Number of instances to be replaced at once during rolling update
+    Type: Number
+    MinValue: '1'
+    MaxValue: '5'
+  DesiredNumberOfInstances:
+    Default: '1'
+    Description: Desired number of instances required
+    Type: Number
+    MinValue: '0'
+    MaxValue: '5'
+  Environment:
+    Description: The environment to which the subnets belong to
+    Type: String
+    AllowedValues:
+      - dev
+      - stage
+      - prod
+    ConstraintDescription: Must be valid environment name
+  DeploymentScriptsDirectory:
+    Description: Directory where runtime scripts exist
+    Type: String
+    Default: /home/ec2-user
+  DeploymentScriptName:
+    Description: Shell script name with Deployment directory
+    Type: String
+  TargetgroupARN:
+    Description: ARN of the target group to be attached
+    Type: String
+    AllowedPattern: '^arn:aws:elasticloadbalancing:.*$'
+    ConstraintDescription: Must be a valid Target Group ARN
+  VPCSubnetIDs:
+    Description: VPC subnet IDs under which ASG should be placed
+    Type: 'List<AWS::EC2::Subnet::Id>'
+  VPCCidrBlock:
+    Description: CIDR block of VPC to allow SSH from within VPC
+    Type: String
+    AllowedPattern: '^([0-9]{1,3}\.){3}[0-9]{1,3}(\/([0-9]|[1-2][0-9]|3[0-2]))$'
+    ConstraintDescription: Must be a CIDR block
+  VPCID:
+    Description: AWS Provided VPC Identifier
+    Type: 'AWS::EC2::VPC::Id'
+  LBSecurityGroupID:
+    Description: Security Group attached to LoadBalancer
+    Type: String
+    AllowedPattern: 'sg-[a-z0-9]+'
+    ConstraintDescription: Must be a valid Security Group ID
+  OSType:
+    Description: Type of the Operating System on which the AMI is based
+    Type: String
+    AllowedValues:
+      - RHEL
+      - AmazonLinux
+    Default: AmazonLinux
+Mappings:
+  OSMappings:
+    RHEL:
+      BlockDeviceName: /dev/sda1
+    AmazonLinux:
+      BlockDeviceName: /dev/xvda
+Resources:
+  AppASG:
+    Type: 'AWS::AutoScaling::AutoScalingGroup'
+    UpdatePolicy:
+      AutoScalingRollingUpdate:
+        MinInstancesInService: !Ref MinInstances
+        MaxBatchSize: !Ref BatchSize
+        PauseTime: PT4M
+    Properties:
+      LaunchConfigurationName: !Ref AppLaunchConfig
+      MinSize: !Ref MinInstances
+      MaxSize: !Ref MaxInstances
+      DesiredCapacity: !Ref DesiredNumberOfInstances
+      HealthCheckType: ELB
+      VPCZoneIdentifier: !Ref VPCSubnetIDs
+      HealthCheckGracePeriod: '300'
+      Tags:
+        - Key: Name
+          Value: !Ref AppName
+          PropagateAtLaunch: 'true'
+        - Key: Environment
+          Value: !Ref Environment
+          PropagateAtLaunch: 'true'
+      TargetGroupARNs:
+        - !Ref TargetgroupARN
+  AppSecurityGroup:
+    Type: 'AWS::EC2::SecurityGroup'
+    Properties:
+      GroupDescription: >-
+        Allow all outbound access. Allow incoming ssh within VPC and 8080 from
+        LB
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: '22'
+          ToPort: '22'
+          CidrIp: !Ref VPCCidrBlock
+        - IpProtocol: tcp
+          FromPort: '8080'
+          ToPort: '8080'
+          SourceSecurityGroupId: !Ref LBSecurityGroupID
+      VpcId: !Ref VPCID
+  AppLaunchConfig:
+    Type: 'AWS::AutoScaling::LaunchConfiguration'
+    Properties:
+      KeyName: !Ref KeyName
+      ImageId: !Ref AMIID
+      SecurityGroups:
+        - !Ref AppSecurityGroup
+      InstanceType: !Ref InstanceType
+      BlockDeviceMappings:
+        - DeviceName: !FindInMap 
+            - OSMappings
+            - !Ref OSType
+            - BlockDeviceName
+          Ebs:
+            VolumeSize: !Ref VolumeSize
+            DeleteOnTermination: 'true'
+      UserData: !Base64 
+        'Fn::Join':
+          - ''
+          - - '#!/bin/bash -ex'
+            - |+
+
+            - 'cd '
+            - !Ref DeploymentScriptsDirectory
+            - |+
+
+            - 'sh '
+            - !Ref DeploymentScriptName
+            - |+
+
+Outputs:
+  ASGID:
+    Description: Generated Auto Scaling Group ID
+    Value: !Ref AppASG

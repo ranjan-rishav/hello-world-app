@@ -1,0 +1,100 @@
+Parameters:
+  Environment:
+    Description: The environment to which the subnets belong to
+    Type: String
+    AllowedValues:
+      - dev
+      - stage
+      - prod
+    ConstraintDescription: Must be valid environment name
+  SubnetIDs:
+    Description: >-
+      Comma separated list of subnet IDs to attach to LB. There cant be more
+      than one subnet ID from same AZ
+    Type: 'List<AWS::EC2::Subnet::Id>'
+  VPCID:
+    Description: AWS Provided VPC Identifier
+    Type: 'AWS::EC2::VPC::Id'
+  VPCCidrBlock:
+    Description: CIDR block of VPC to allow SSH from within VPC
+    Type: String
+  ApplicationLoadBalancerName:
+    Description: Name of the App LB to be created
+    Type: String
+    MaxLength: 32
+  TargetGroupName:
+    Description: Name of Target Group to be provisioned
+    Type: String
+    MaxLength: 32
+Resources:
+  LBSecurityGroup:
+    Type: 'AWS::EC2::SecurityGroup'
+    Properties:
+      GroupDescription: Allow 8080 from whole world
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: '8080'
+          ToPort: '8080'
+          CidrIp: 0.0.0.0/0
+      VpcId: !Ref VPCID
+  AppLoadBalancer:
+    Type: 'AWS::ElasticLoadBalancingV2::LoadBalancer'
+    Properties:
+      Name: !Ref ApplicationLoadBalancerName
+      Scheme: internet-facing
+      Subnets: !Ref SubnetIDs
+      LoadBalancerAttributes:
+        - Key: idle_timeout.timeout_seconds
+          Value: '300'
+        - Key: routing.http2.enabled
+          Value: 'false'
+      SecurityGroups:
+        - !Ref LBSecurityGroup
+      Tags:
+        - Key: Name
+          Value: !Ref ApplicationLoadBalancerName
+        - Key: Environment
+          Value: !Ref Environment
+  ALBTargetGroup:
+    Type: 'AWS::ElasticLoadBalancingV2::TargetGroup'
+    Properties:
+      HealthCheckIntervalSeconds: 30
+      HealthCheckPath: /
+      HealthCheckTimeoutSeconds: 5
+      HealthyThresholdCount: 2
+      HealthCheckPort: 8080
+      HealthCheckProtocol: HTTP
+      Name: !Ref TargetGroupName
+      Port: 8080
+      Protocol: HTTP
+      UnhealthyThresholdCount: 5
+      VpcId: !Ref VPCID
+      TargetGroupAttributes:
+        - Key: deregistration_delay.timeout_seconds
+          Value: '300'
+  ALBListener:
+    Type: 'AWS::ElasticLoadBalancingV2::Listener'
+    Properties:
+      DefaultActions:
+        - Type: forward
+          TargetGroupArn: !Ref ALBTargetGroup
+      LoadBalancerArn: !Ref AppLoadBalancer
+      Port: 8080
+      Protocol: HTTP
+Outputs:
+  AppLoadBalancerDNSName:
+    Description: DNSName of Application load balancer
+    Value: !GetAtt 
+      - AppLoadBalancer
+      - DNSName
+  AppLoadBalancerName:
+    Description: Name of Application load balancer
+    Value: !Ref AppLoadBalancer
+  TargetGroupArn:
+    Description: ARN of target group
+    Value: !Ref ALBTargetGroup
+  LoadBalancerSecurityGroupID:
+    Description: Security Group ID of load balancer
+    Value: !GetAtt 
+      - LBSecurityGroup
+      - GroupId

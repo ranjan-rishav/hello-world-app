@@ -1,0 +1,39 @@
+{
+	"aws": { "region": "us-west-2"},
+	"stack": {
+		"name": "dev-helloworld-alb",
+		"template_path": "../templates/app/app_alb.yaml",
+		"parameters": [
+			{
+				"ParameterKey": "Environment",
+				"ParameterValue": "dev",
+				"UsePreviousValue": false
+			},
+			{
+				"ParameterKey": "SubnetIDs",
+				"ParameterValue": "subnet-ba8424f0,subnet-6865e210",
+				"UsePreviousValue": false
+			},
+			{
+				"ParameterKey": "VPCID",
+				"ParameterValue": "vpc-47c8e23f",
+				"UsePreviousValue": false
+			},
+			{
+				"ParameterKey": "VPCCidrBlock",
+				"ParameterValue": "172.31.0.0/16",
+				"UsePreviousValue": false
+            },
+            {
+				"ParameterKey": "ApplicationLoadBalancerName",
+				"ParameterValue": "helloworld-alb",
+				"UsePreviousValue": false
+            },
+            {
+				"ParameterKey": "TargetGroupName",
+				"ParameterValue": "helloworld-tg",
+				"UsePreviousValue": false
+            }
+		]
+	}
+}

@@ -1,0 +1,104 @@
+AWSTemplateFormatVersion: 2010-09-09
+Parameters:
+  Environment:
+    Description: The environment to which the subnets belong to
+    Type: String
+    AllowedValues:
+      - dev
+      - stage
+      - prod
+    ConstraintDescription: Must be valid environment name
+  VPCID:
+    Description: AWS Provided VPC Identifier
+    Type: 'AWS::EC2::VPC::Id'
+  NATGWRouteTableId:
+    Description: Route table to be used for Subnet
+    Type: String
+    AllowedPattern: 'rtb-[a-z0-9]+'
+    ConstraintDescription: Must be a valid Route table ID
+  SubnetACidrBlock:
+    Description: >-
+      CIDR block for Private Subnet A. This should not clash with existing
+      subnets and should be subset of VPC CIDR Block
+    Type: String
+    AllowedPattern: '^([0-9]{1,3}\.){3}[0-9]{1,3}(\/([0-9]|[1-2][0-9]|3[0-2]))$'
+    ConstraintDescription: Must be a CIDR block
+  SubnetAAZ:
+    Description: AvailabilityZone for private subnet A
+    Type: 'AWS::EC2::AvailabilityZone::Name'
+  NameSuffixSubnetA:
+    Description: Name for Private subnet A
+    Type: String
+  SubnetBCidrBlock:
+    Description: >-
+      CIDR block for Private Subnet B. This should not clash with existing
+      subnets and should be subset of VPC CIDR Block
+    Type: String
+    AllowedPattern: '^([0-9]{1,3}\.){3}[0-9]{1,3}(\/([0-9]|[1-2][0-9]|3[0-2]))$'
+    ConstraintDescription: Must be a CIDR block
+  SubnetBAZ:
+    Description: AvailabilityZone for private subnet B
+    Type: 'AWS::EC2::AvailabilityZone::Name'
+  NameSuffixSubnetB:
+    Description: Name for Private subnet B
+    Type: String
+Resources:
+  PrivateServiceSubnetA:
+    Type: 'AWS::EC2::Subnet'
+    Properties:
+      MapPublicIpOnLaunch: true #Reusing public route table to avoid NAT gateway creation
+      AvailabilityZone: !Ref SubnetAAZ
+      CidrBlock: !Ref SubnetACidrBlock
+      VpcId: !Ref VPCID
+      Tags:
+        - Key: Environment
+          Value: !Ref Environment
+        - Key: Name
+          Value: !Join 
+            - ''
+            - - !Ref Environment
+              - '-'
+              - !Ref NameSuffixSubnetA
+  SubnetRouteTableAssociationA:
+    Type: 'AWS::EC2::SubnetRouteTableAssociation'
+    Properties:
+      SubnetId: !Ref PrivateServiceSubnetA
+      RouteTableId: !Ref NATGWRouteTableId
+  PrivateServiceSubnetB:
+    Type: 'AWS::EC2::Subnet'
+    Properties:
+      MapPublicIpOnLaunch: true #Reusing public route table to avoid NAT gateway creation
+      AvailabilityZone: !Ref SubnetBAZ
+      CidrBlock: !Ref SubnetBCidrBlock
+      VpcId: !Ref VPCID
+      Tags:
+        - Key: Environment
+          Value: !Ref Environment
+        - Key: Name
+          Value: !Join 
+            - ''
+            - - !Ref Environment
+              - '-'
+              - !Ref NameSuffixSubnetB
+  SubnetRouteTableAssociationB:
+    Type: 'AWS::EC2::SubnetRouteTableAssociation'
+    Properties:
+      SubnetId: !Ref PrivateServiceSubnetB
+      RouteTableId: !Ref NATGWRouteTableId
+Outputs:
+  PrivateSubnetAID:
+    Description: Subnet ID of Private subnet A created
+    Value: !Ref PrivateServiceSubnetA
+  PrivateSubnetAAZ:
+    Description: Availability Zone of Private subnet A created
+    Value: !GetAtt 
+      - PrivateServiceSubnetA
+      - AvailabilityZone
+  PrivateSubnetBID:
+    Description: Subnet ID of Private subnet B created
+    Value: !Ref PrivateServiceSubnetB
+  PrivateSubnetBAZ:
+    Description: Availability Zone of Private subnet B created
+    Value: !GetAtt 
+      - PrivateServiceSubnetB
+      - AvailabilityZone

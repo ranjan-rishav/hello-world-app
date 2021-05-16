@@ -1,0 +1,99 @@
+{
+	"aws": { "region": "us-west-2"},
+	"stack": {
+		"name": "dev-asg-with-dep",
+		"template_path": "../templates/app/asg_with_dep.yaml",
+		"parameters": [
+			{
+				"ParameterKey": "Environment",
+				"ParameterValue": "dev",
+				"UsePreviousValue": false
+			},
+			{
+				"ParameterKey": "AppName",
+				"ParameterValue": "helloworld",
+				"UsePreviousValue": false
+			},
+			{
+				"ParameterKey": "KeyName",
+				"ParameterValue": "app_instance",
+				"UsePreviousValue": false
+			},
+			{
+				"ParameterKey": "InstanceType",
+				"ParameterValue": "t2.micro",
+				"UsePreviousValue": false
+            },
+            {
+				"ParameterKey": "AMIID",
+				"ParameterValue": "PLACEHOLDER",
+				"UsePreviousValue": false
+            },
+            {
+				"ParameterKey": "VolumeSize",
+				"ParameterValue": "10",
+				"UsePreviousValue": false
+            },
+            {
+				"ParameterKey": "MinInstances",
+				"ParameterValue": "1",
+				"UsePreviousValue": false
+            },
+            {
+				"ParameterKey": "MaxInstances",
+				"ParameterValue": "3",
+				"UsePreviousValue": false
+            },
+            {
+				"ParameterKey": "BatchSize",
+				"ParameterValue": "1",
+				"UsePreviousValue": false
+            },
+            {
+				"ParameterKey": "DesiredNumberOfInstances",
+				"ParameterValue": "2",
+				"UsePreviousValue": false
+            },
+            {
+				"ParameterKey": "DeploymentScriptsDirectory",
+				"ParameterValue": "/home/ec2-user",
+				"UsePreviousValue": false
+            },
+            {
+				"ParameterKey": "DeploymentScriptName",
+				"ParameterValue": "service_startup.sh",
+				"UsePreviousValue": false
+            },
+            {
+				"ParameterKey": "TargetgroupARN",
+				"ParameterValue": "arn:aws:elasticloadbalancing:us-west-2:195482931739:targetgroup/helloworld-tg/1ec5e053be67269c",
+				"UsePreviousValue": false
+            },
+            {
+				"ParameterKey": "VPCSubnetIDs",
+				"ParameterValue": "subnet-00165c775bf0134ee,subnet-09ff5d7afef3874c4",
+				"UsePreviousValue": false
+            },
+            {
+				"ParameterKey": "VPCCidrBlock",
+				"ParameterValue": "172.31.0.0/16",
+				"UsePreviousValue": false
+            },
+            {
+				"ParameterKey": "VPCID",
+				"ParameterValue": "vpc-47c8e23f",
+				"UsePreviousValue": false
+            },
+            {
+				"ParameterKey": "LBSecurityGroupID",
+				"ParameterValue": "sg-07282d813972b531c",
+				"UsePreviousValue": false
+            },
+            {
+				"ParameterKey": "OSType",
+				"ParameterValue": "AmazonLinux",
+				"UsePreviousValue": false
+            }
+		]
+	}
+}

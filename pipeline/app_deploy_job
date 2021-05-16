@@ -1,0 +1,39 @@
+pipeline {
+	agent none
+	parameters { 
+		choice(name: 'resource_type', choices: ['app_asg', 'app_alb', 'natgw_rtb', 'subnets'], description: 'Select Resource Type to be deployed')
+		string(name: 'ami_name', defaultValue: 'service_ami_0.1.1', description: 'Name of AMI to be deployed if resource is app_asg')
+	 }
+	stages {
+		stage('Deploy'){
+			agent {
+				label 'master'
+			}
+			steps {
+				script{
+					def workspace = pwd()
+					sh """
+						mkdir -p ${workspace}
+						rm -rf ${workspace}/*
+					"""
+					def git_url = "https://github.azc.ext.hp.com/rishav-ranjan/hello-world-app"
+					checkout changelog: false, poll: false, scm: [$class: 'GitSCM', branches: [[name: '*/master']], extensions: [], userRemoteConfigs: [[credentialsId: 'git_api_token', url: "${git_url}"]]]
+					sh """
+					    cd infra/scripts
+						sudo pip3 install boto3
+						if [ "${params.resource_type}" = "app_asg" ]; then
+							python3 app_deploy.py -o get_ami_id_from_name -a ${params.ami_name}|sudo tee ami_id.log
+							ami_id=\$(cat ami_id.log|grep AMIID=|awk -F= '{print \$2}')
+							# hardcoded input file path
+							input_file_path="../inputs/helloworld/asg_with_dep.json"
+							sed -i "s/PLACEHOLDER/\$ami_id/g" \$input_file_path
+							python3 app_deploy.py -o deploy -r app_asg
+						else
+							python3 app_deploy.py -o deploy -r${params.resource_type}
+						fi
+					"""
+				}
+			}
+		}
+	}
+}

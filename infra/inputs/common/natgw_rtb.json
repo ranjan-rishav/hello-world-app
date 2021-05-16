@@ -1,0 +1,29 @@
+{
+	"aws": { "region": "us-west-2"},
+	"stack": {
+		"name": "dev-natgw-rtb",
+		"template_path": "../templates/common/natgw_rtb.yaml",
+		"parameters": [
+			{
+				"ParameterKey": "Environment",
+				"ParameterValue": "dev",
+				"UsePreviousValue": false
+			},
+			{
+				"ParameterKey": "VPCID",
+				"ParameterValue": "vpc-47c8e23f",
+				"UsePreviousValue": false
+			},
+			{
+				"ParameterKey": "PublicSubnetID",
+				"ParameterValue": "subnet-ba8424f0",
+				"UsePreviousValue": false
+			},
+			{
+				"ParameterKey": "NATGatewayName",
+				"ParameterValue": "dev-natgw-subnet-a",
+				"UsePreviousValue": false
+			}
+		]
+	}
+}
