@@ -22,8 +22,8 @@ pipeline {
 					    cd infra/scripts
 						sudo pip3 install boto3
 						if [ "${params.resource_type}" = "app_asg" ]; then
-							python3 app_deploy.py -o get_ami_id_from_name -a ${params.ami_name}|sudo tee ami_id.log
-							ami_id=\$(cat ami_id.log|grep AMIID=|awk -F= '{print \$2}')
+							python3 app_deploy.py -o get_ami_id_from_name -a ${params.ami_name}
+							ami_id=\$(cat deploy.log|grep AMIID=|awk -F= '{print \$2}')
 							# hardcoded input file path
 							input_file_path="../inputs/helloworld/asg_with_dep.json"
 							sed -i "s/PLACEHOLDER/\$ami_id/g" \$input_file_path

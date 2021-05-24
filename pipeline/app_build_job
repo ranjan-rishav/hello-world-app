@@ -43,9 +43,9 @@ pipeline {
 					sh """
 						cd infra/scripts/
 						# Create temp EC2 instance
-						sudo python3 app_build.py -o create_ec2 |sudo tee ec2_output.log
-						instance_id=\$(cat ec2_output.log|grep InstanceID=|awk -F= '{print \$2}')
-						instance_pvt_ip=\$(cat ec2_output.log|grep PrivateIP=|awk -F= '{print \$2}')
+						sudo python3 app_build.py -o create_ec2
+						instance_id=\$(cat build.log|grep InstanceID=|awk -F= '{print \$2}')
+						instance_pvt_ip=\$(cat build.log|grep PrivateIP=|awk -F= '{print \$2}')
 						# Copy startup script to instance
 						chmod +x ${workspace}/infra/scripts/service_startup.sh
 						sudo scp -q -o StrictHostKeyChecking=no -i /home/ec2-user/interim_instance.pem ${workspace}/infra/scripts/service_startup.sh ec2-user@\$instance_pvt_ip:/home/ec2-user/service_startup.sh
