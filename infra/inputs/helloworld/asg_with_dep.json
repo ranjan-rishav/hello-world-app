@@ -66,12 +66,12 @@
             },
             {
 				"ParameterKey": "TargetgroupARN",
-				"ParameterValue": "arn:aws:elasticloadbalancing:us-west-2:195482931739:targetgroup/helloworld-tg/1ec5e053be67269c",
+				"ParameterValue": "arn:aws:elasticloadbalancing:us-west-2:195482931739:targetgroup/helloworld-tg/e39b51c173cc67bf",
 				"UsePreviousValue": false
             },
             {
 				"ParameterKey": "VPCSubnetIDs",
-				"ParameterValue": "subnet-00165c775bf0134ee,subnet-09ff5d7afef3874c4",
+				"ParameterValue": "subnet-05e5c76a6d82acbfa,subnet-05e5c76a6d82acbfa",
 				"UsePreviousValue": false
             },
             {
@@ -86,7 +86,7 @@
             },
             {
 				"ParameterKey": "LBSecurityGroupID",
-				"ParameterValue": "sg-07282d813972b531c",
+				"ParameterValue": "sg-0bfd5844162d29874",
 				"UsePreviousValue": false
             },
             {
