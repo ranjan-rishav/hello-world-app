@@ -16,7 +16,7 @@ pipeline {
 						mkdir -p ${workspace}
 						rm -rf ${workspace}/*
 					"""
-					def git_url = "https://github.azc.ext.hp.com/rishav-ranjan/hello-world-app"
+					def git_url = "https://github.com/ranjan-rishav/hello-world-app"
 					checkout changelog: false, poll: false, scm: [$class: 'GitSCM', branches: [[name: '*/master']], extensions: [], userRemoteConfigs: [[credentialsId: 'git_api_token', url: "${git_url}"]]]
 					sh """
 					    cd infra/scripts
